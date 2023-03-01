@@ -1,0 +1,9 @@
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_gpio.h:881:22:LL_GPIO_SetOutputPin	16	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_gpio.h:910:22:LL_GPIO_ResetOutputPin	16	static
+../Core/Src/dxl_hal.c:4:5:dxl_hal_open	16	static
+../Core/Src/dxl_hal.c:15:6:dxl_hal_close	4	static
+../Core/Src/dxl_hal.c:23:6:dxl_hal_clear	8	static
+../Core/Src/dxl_hal.c:30:5:dxl_hal_tx	24	static
+../Core/Src/dxl_hal.c:49:5:dxl_hal_rx	32	static
+../Core/Src/dxl_hal.c:68:6:dxl_hal_set_timeout	16	static
+../Core/Src/dxl_hal.c:77:5:dxl_hal_timeout	8	static

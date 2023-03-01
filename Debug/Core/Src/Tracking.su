@@ -1,0 +1,6 @@
+../Core/Src/Tracking.c:16:6:Tracking	184	static
+../Core/Src/Tracking.c:74:6:WayPointLine	80	static
+../Core/Src/Tracking.c:95:6:WayPointCircle	176	static
+../Core/Src/Tracking.c:183:7:DistanceD	32	static
+../Core/Src/Tracking.c:190:6:CroTwoCir	80	static
+../Core/Src/Tracking.c:216:6:Mapping	168	static

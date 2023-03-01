@@ -1,0 +1,4 @@
+../Core/Src/MatrixCalculate.c:10:6:mattimes	48	static
+../Core/Src/MatrixCalculate.c:29:6:transpose	32	static
+../Core/Src/MatrixCalculate.c:40:6:matplus	32	static
+../Core/Src/MatrixCalculate.c:48:6:inv3	32	static

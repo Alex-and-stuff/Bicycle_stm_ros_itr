@@ -1,0 +1,4 @@
+../Core/Src/PDcontrol.c:15:6:PDControl	120	static
+../Core/Src/PDcontrol.c:125:7:LowpassFilter	32	static
+../Core/Src/PDcontrol.c:131:7:ReadDeltaAngle	24	static
+../Core/Src/PDcontrol.c:146:7:ReadDeltaOmega	24	static
