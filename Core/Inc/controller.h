@@ -18,6 +18,7 @@
 void control(void);
 float low_pass(float input,  float output_old, float frequency);
 void PDControl(float theta, float theta_dot, float tracking_angle, float *remote_angle, float *hexgoal,uint8_t distance_flag, float bias);
+void PDD(float* state, float v, float* tracking_cmd, float remote_cmd, uint8_t distance_flag);
 float notch_filter(float last_notch_delta, float last_last_notch_delta, float output_delta, float last_output_delta, float last_last_output_delta);
 float LowpassFilter(float input,  float output_old, float frequency, float dt);
 void LMI(float theta, float theta_dot, float tracking_omega, float *remote_angle, float *delta_output, float vel);

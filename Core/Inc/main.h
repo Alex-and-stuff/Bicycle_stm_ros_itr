@@ -113,7 +113,8 @@ void start_read(uint16_t *RX1, uint16_t *RX2, uint16_t *RX3);
 /* USER CODE BEGIN Private defines */
 #define define_STM32
 #define USE_ROS
-
+#define NOSPEEDMODE
+#define RTK_GPS
 // remote mode: comment out DEBUGOPENIMU and EKF
 // debug  mode:  leave only DEBUOPENIMU and USE_OPENIMU uncommented
 

@@ -14,7 +14,10 @@
 
 void setup(void);
 void loop(int* val);
-void loop2(float* theta, float* theta_dot, float* delta, float*v, float* cmd);
+//void loop2(float* theta, float* theta_dot, float* delta, float*v, float* cmd);
+void loop2(float* theta, float* theta_dot, float* delta, float* v, float* cmd, float acc_x,
+		float position_omega, double* lat_current, double* lon_current, float* horizontal_accuracy,
+		float* vertical_accuracy, float* point_current);
 
 #ifdef __cplusplus
 }

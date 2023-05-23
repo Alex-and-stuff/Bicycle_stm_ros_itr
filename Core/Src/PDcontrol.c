@@ -12,6 +12,104 @@
 
 extern float V_current;  // @TODO bad habit of using global variables
 
+void PDD(float* state, float v, float* tracking_cmd, float remote_cmd, uint8_t distance_flag){
+
+#ifdef NOSPEEDMODE
+	v = 1.6;
+#endif
+
+	float Kp = -5.60f;
+	float Kd = -0.28f;
+	float dt = 0.01;
+	float b = 1.053;
+	float diff = 0.012f;
+
+	float theta = state[0];
+	float theta_dot = state[1];
+
+	// Process remote control command from turn readings to randians
+	uint16_t top = REMOTE_CENTER * 1.5;
+	uint16_t dow = REMOTE_CENTER * 0.5;
+
+	float vd = tracking_cmd[0];
+	float wd = -tracking_cmd[1];
+//	wd = -0.0;
+	float rd = remote_cmd;
+	vd = vd > V_MAX ? V_MAX : vd;
+	vd = vd < V_MIN ? V_MIN : vd;
+	wd = wd > W_MAX ? W_MAX : wd;
+	wd = wd < W_MIN ? W_MIN : wd;
+	rd = rd > top ? top : rd;
+	rd = rd < dow ? dow : rd;
+
+	float CMD_DELTA_MAX = 0.436332f;
+	float CMD_DELTA_MIN = -0.436332f;
+	float remote_delta = CMD_DELTA_MAX * (REMOTE_CENTER - rd)/(top - REMOTE_CENTER);
+	float remote_delta_lp = remote_delta;
+	static float remote_delta_lp_old = 0.0f;
+	remote_delta_lp = LowpassFilter(remote_delta_lp, remote_delta_lp_old, 4.0f, dt);
+	remote_delta_lp_old = remote_delta_lp;
+
+	// Process tracking command from angular velocity to radians
+	float tracking_delta = (atan(b * wd / v) / sin(epsilon));  // vd changed to v for convenience
+	if (fabs(tracking_delta) > CMD_DELTA_MAX) {
+		if (tracking_delta > 0)
+			tracking_delta = CMD_DELTA_MAX;
+		else
+			tracking_delta = -CMD_DELTA_MAX;
+	}
+
+	// Merge controls from remote and tracking
+	float delta_d = tracking_delta + remote_delta;
+	delta_d = delta_d > CMD_DELTA_MAX ? CMD_DELTA_MAX : delta_d;
+	delta_d = delta_d < CMD_DELTA_MIN ? CMD_DELTA_MIN : delta_d;
+
+	float delta_control = theta * Kp + theta_dot * Kd;
+
+	#if TESTEKF == 1
+		tracking_delta = 0.0f;
+	#endif
+
+	float tracking_omega_max = 0.436332f; //delta 25(degree)
+	float tracking_omega_min = -0.436332f; //delta 25(degree)
+
+	static float command_old = 0.0f;
+	float command = delta_d + remote_delta_lp; // tracking delta + remote command delta
+//	*tracking_cmd = (atan(1.053 * tracking_delta / v) / sin(epsilon));	//L : bicycle  length = 1.053(meter)
+
+	if (command > tracking_omega_max) {
+			command = tracking_omega_max;
+	}
+	if(command < tracking_omega_min) {
+			command = tracking_omega_min;
+	}
+
+//	if (distance_flag) {
+//
+//		float init_bound = 0.15f;
+//		if (fabsf(command) > init_bound) {
+//			command = command > 0 ? init_bound : -init_bound;
+//		}
+//	}
+
+	if (command - command_old > diff) {// avoid omega different large
+			command = command_old + diff;
+	}
+	if (command - command_old < -diff) {
+			command = command_old - diff;
+	}
+	command_old = command;
+
+
+//	int16_t tracking_cmd_hex = (delta_d + remote_delta_lp) * RAD2DEG / MXHEX2DEC;
+	int16_t tracking_cmd_hex = (command) * RAD2DEG / MXHEX2DEC;
+
+	uint16_t hexgoal = (uint16_t) ((MXDEC_CENTER - delta_control*180.0f/PI) / MXHEX2DEC + tracking_cmd_hex);
+	if (hexgoal < MXUPPER_BOUND && hexgoal > MXLOWER_BOUND) {
+		dxl_write_word(MOTOR_ID, P_GOAL_POSITION_L, hexgoal);
+	}
+
+}
 void PDControl(float theta, float theta_dot, float tracking_angle, float *remote, float *delta_output, uint8_t distance_flag, float bias) {
 /* @input: theta (bicycle roll angle), theta_dot, omega_command, remote, delta_output, distance_flag
  * @note: *remote gives back the remote position (rad)?

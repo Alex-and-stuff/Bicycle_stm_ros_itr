@@ -28,11 +28,11 @@ void openIMU(float *theta_x, float *acc, float *gyro, float *theta_y) {
 	HAL_SPI_TransmitReceive(&hspi2, (uint8_t*) &theta_address, (uint8_t*) &Reno,1U, HAL_MAX_DELAY);
 	HAL_SPI_TransmitReceive(&hspi2, (uint8_t*) &NUL, (uint8_t*) &Stat_theta, 1U,HAL_MAX_DELAY);		//receive data
 	HAL_SPI_TransmitReceive(&hspi2, (uint8_t*) &NUL, (uint8_t*) &tmp, 1U,HAL_MAX_DELAY);
-	int16_t Rxtx = tmp[1] << 8 | tmp[0]; //rho
+	int16_t Rxtx = tmp[1] << 8 | tmp[0]; //roll
 	HAL_SPI_TransmitReceive(&hspi2, (uint8_t*) &NUL, (uint8_t*) &tmp, 1U,HAL_MAX_DELAY);
 	int16_t Rxty = tmp[1] << 8 | tmp[0]; //pitch
 	HAL_SPI_TransmitReceive(&hspi2, (uint8_t*) &NUL, (uint8_t*) &tmp, 1U,HAL_MAX_DELAY);
-//	int16_t Rxtz = tmp[1] << 8 | tmp[0]; //yo
+//	int16_t Rxtz = tmp[1] << 8 | tmp[0]; //yaw
 	HAL_SPI_TransmitReceive(&hspi2, (uint8_t*) &NUL,(uint8_t*) &Temperature_theta, 1U, HAL_MAX_DELAY);
 //	SPIdelay();
 	LL_GPIO_SetOutputPin(GPIOA, SPI_CSG_Pin);				//end spi talking

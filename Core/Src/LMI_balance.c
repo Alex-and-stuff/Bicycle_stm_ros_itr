@@ -12,6 +12,10 @@ float dt = 0.01;
 float DeltaCmdControl(float delta_output, float delta_cmd);
 void LMIII(float* state, float v, float* tracking_cmd, float remote_cmd){
 
+#ifdef NOSPEEDMODE
+	v = 1.6;
+#endif
+
     float theta = state[0];
     float theta_dot = state[1];
     float delta = state[2];
@@ -21,7 +25,7 @@ void LMIII(float* state, float v, float* tracking_cmd, float remote_cmd){
 	uint16_t dow = REMOTE_CENTER * 0.5;
 
     float vd = tracking_cmd[0];
-    float wd = tracking_cmd[1];
+    float wd = -tracking_cmd[1];
     float rd = remote_cmd;
     vd = vd > V_MAX ? V_MAX : vd;
     vd = vd < V_MIN ? V_MIN : vd;

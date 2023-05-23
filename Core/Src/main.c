@@ -238,6 +238,8 @@ int main(void)
   float gps_drift[2] = {0.0f};
   float horizontal_accuracy = 0.0f;
   float vertical_accuracy = 0.0f;
+  double lat_current;
+  double lon_current;
   float mu[4] = { init_x, init_y, init_phi, 0.0f }; // X Y Phi velocity
 
   // ============= LCD Parameters ==================
@@ -318,6 +320,11 @@ int main(void)
 			LL_GPIO_SetOutputPin(GPIOC, Act_Off_Pin);	//up
 			LL_GPIO_SetOutputPin(GPIOC, Act_On_Pin);
 		}
+
+#ifdef NOSPEEDMODE
+		if(velocity_cmd_flag)vel_first_flag = 1;
+#endif
+
 #endif
 	}else{
 #ifdef REMOTE_STOP
@@ -399,17 +406,11 @@ int main(void)
 	}
 #endif
 
-
-
-	// ============================== EKF Mode ==============================
-#ifdef EKF
+	// ========================== Open RTK GPS ==========================
+#ifdef RTK_GPS
 	now = HAL_GetTick();
 	uint16_t ekfdt = now - oldekf_time;
 	if (ekfdt >= EKFSAMPLE) {
-		oldekf_time = HAL_GetTick();
-
-		// =============== Obtain And Process GPS information =================
-		LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_12);
 		if(update_gps && velocity_cmd_flag){        // First check if the GPS data is correct
 			check_flag = check_sum();
 			if (check_flag != 3) {
@@ -417,8 +418,6 @@ int main(void)
 			}
 		}
 		if (update_gps) {							// Process the "correct" GPS data
-			double lat_current;
-			double lon_current;
 			readGPS(&lat_current, &lon_current);
 			gpsXY(lat_current, lon_current, point_current);
 			ReadAccuracyEstimate(&horizontal_accuracy,&vertical_accuracy);
@@ -429,55 +428,10 @@ int main(void)
 				point_current[1] = point_current[1] + gps_drift[1];
 			}
 			// ========== Perform The EKF Algorithm For Localization ===========
-			EKF_filter(mu, theta_x, acc, gyro, point_current, V_current, theta_y, horizontal_accuracy);
-			} else {
+//			EKF_filter(mu, theta_x, acc, gyro, point_current, V_current, theta_y, horizontal_accuracy);
+		} else {
 			gps_drift[0] = init_x - point_current[0];  // Seems like the distance difference instead of drift?
 			gps_drift[1] = init_y - point_current[1];
-		}
-
-		// ============= Tracking Mode According To "tracking_first_flag" ======
-		if (tracking_first_flag == 0) {
-			float vehicle_vector[2] = { mu[0] - way_point_begin[0], mu[1] - way_point_begin[1] };
-			float line_vector[2] = { way_point_end[0] - way_point_begin[0], way_point_end[1] - way_point_begin[1] };	// point for free just check the vehicle is exceed begin way_point or not
-			float cross_dot = vehicle_vector[0] * line_vector[0] + vehicle_vector[1] * line_vector[1];
-
-			if (cross_dot > 0) {	// mean the vehicle exceed begin way_point, start "tracking"
-				time_shift = HAL_GetTick();
-				tracking_first_flag = 1;
-			}
-		} else{
-			// ===================== Enter Tracking Mode =======================
-			Mapping(way_point_begin, way_point_end, circle_point, &radius, &turn_circle_flag, line);
-			Tracking(mu, way_point_begin, way_point_end, circle_point, radius, turn_circle_flag, &line, &time_shift, tracking_control, stateD);
-#ifdef USE_TILTLED
-			if (theta_x == 0 && theta_y == 0){                      			// if no IMU data is received, make all three lights light up
-				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1 ,GPIO_PIN_RESET); 			// Green LED (right)
-				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2 ,GPIO_PIN_RESET); 			// Red   LED (middle)
-				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10,GPIO_PIN_RESET);  			// Green LED (left)
-			}
-			else{
-				double angle_margin = 0.02;
-				if (theta_x > (0.0 + angle_margin)){                       		// if the bicycle is about horizontal, light up the red LED
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1 ,GPIO_PIN_SET);  		// Green LED
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2 ,GPIO_PIN_RESET);   	// Red   LED
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10,GPIO_PIN_SET);  		// Green LED
-				}
-				else if (theta_x < (0.0 - angle_margin)){                  		// if the bicycle is tilted left (about x-axis), light up the left green LED
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1 ,GPIO_PIN_SET);  		// Green LED
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2 ,GPIO_PIN_SET);  		// Red   LED
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10,GPIO_PIN_RESET);    	// Green LED
-				}
-				else{                                                      		// if the bicycle is tilted right (about x-axis), light up the right green LED
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1 ,GPIO_PIN_RESET);    	// Green LED
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2 ,GPIO_PIN_SET);  		// Red   LED
-					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10,GPIO_PIN_SET);  		// Green LED
-				}
-			}
-#endif
-		}
-		// ============ Finished One Lap (path: 4 curves 4 lines) ============
-		if (line > stage) {	//eight stage
-			line = 1;
 		}
 	}
 #endif
@@ -517,7 +471,9 @@ int main(void)
 		dis_flag = line == 3 ? dis_flag : 0;
 //		PDControl(theta_x, gyro[0], tracking_control[1], &remote_control, &delta_goal,dis_flag, imu_bias);
 //		LMII(theta_x, gyro[0], tracking_control[0], tracking_control[1], &remote_control, &delta_goal, V_current,dis_flag, imu_bias);
-		LMIII(state, V_current, tracking_control, RX1);
+
+//		LMIII(state, V_current, tracking_control, RX1);
+		PDD(state, V_current, tracking_control, RX1, dis_flag);
 #endif
 
 #if MXSPEEDCTRL == 1
@@ -531,7 +487,12 @@ int main(void)
 #endif
 	}
 #endif
-	loop2(&theta_x, &gyro[0], &delta_ref, &V_current, tracking_control);
+
+	float acc_x = acc[0] + GRAVITY*sinf(theta_y);
+	float position_omega = gyro[2]/cosf(theta_x);
+	loop2(&theta_x, &gyro[0], &delta_ref, &V_current, tracking_control, acc_x, position_omega, &lat_current, &lon_current, &horizontal_accuracy, &vertical_accuracy, point_current);
+
+//	printf("vel: %d\r\n", (int)(V_current*10));
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -650,6 +611,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	// ============= Publish/Subscribe from ROS ==================
     if (htim->Instance == htim14.Instance)
     {
+//    	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_5);
 //    	i ++;
 //    	int a = i%120;
 //#ifdef USE_ROS
@@ -676,6 +638,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				if (tracking_control[0] > V_MAX) v_tmp = V_MAX;
 				if (tracking_control[0] < V_MIN) v_tmp = V_MIN;
 			}
+#endif
+
+#ifdef NOSPEEDMODE
+			v_tmp = 0;
 #endif
 			if (HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) != 0) {
 				uint16_t v_cmd;
