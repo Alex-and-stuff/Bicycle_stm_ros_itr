@@ -1,5 +1,5 @@
 ../Core/Src/PDcontrol.c:15:6:PDD	128	static
-../Core/Src/PDcontrol.c:113:6:PDControl	120	static
-../Core/Src/PDcontrol.c:223:7:LowpassFilter	32	static
-../Core/Src/PDcontrol.c:229:7:ReadDeltaAngle	24	static
-../Core/Src/PDcontrol.c:244:7:ReadDeltaOmega	24	static
+../Core/Src/PDcontrol.c:135:6:PDControl	120	static
+../Core/Src/PDcontrol.c:245:7:LowpassFilter	32	static
+../Core/Src/PDcontrol.c:251:7:ReadDeltaAngle	24	static
+../Core/Src/PDcontrol.c:266:7:ReadDeltaOmega	24	static

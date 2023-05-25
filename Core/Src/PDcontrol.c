@@ -45,11 +45,8 @@ void PDD(float* state, float v, float* tracking_cmd, float remote_cmd, uint8_t d
 	float CMD_DELTA_MAX = 0.436332f;
 	float CMD_DELTA_MIN = -0.436332f;
 	float remote_delta = CMD_DELTA_MAX * (REMOTE_CENTER - rd)/(top - REMOTE_CENTER);
-	float remote_delta_lp = remote_delta;
-	static float remote_delta_lp_old = 0.0f;
-	remote_delta_lp = LowpassFilter(remote_delta_lp, remote_delta_lp_old, 4.0f, dt);
-	remote_delta_lp_old = remote_delta_lp;
 
+	// ========== test =================
 	// Process tracking command from angular velocity to radians
 	float tracking_delta = (atan(b * wd / v) / sin(epsilon));  // vd changed to v for convenience
 	if (fabs(tracking_delta) > CMD_DELTA_MAX) {
@@ -59,10 +56,16 @@ void PDD(float* state, float v, float* tracking_cmd, float remote_cmd, uint8_t d
 			tracking_delta = -CMD_DELTA_MAX;
 	}
 
-	// Merge controls from remote and tracking
 	float delta_d = tracking_delta + remote_delta;
+	float delta_d_lp = delta_d;
+	static float delta_d_lp_old = 0.0f;
+	delta_d_lp = LowpassFilter(delta_d_lp, delta_d_lp_old, 5.0f, dt); // changed from 4.0f to 5.0f
+	delta_d_lp_old = delta_d_lp;
+
+	delta_d = delta_d_lp;
 	delta_d = delta_d > CMD_DELTA_MAX ? CMD_DELTA_MAX : delta_d;
 	delta_d = delta_d < CMD_DELTA_MIN ? CMD_DELTA_MIN : delta_d;
+    //=================================
 
 	float delta_control = theta * Kp + theta_dot * Kd;
 
@@ -74,7 +77,7 @@ void PDD(float* state, float v, float* tracking_cmd, float remote_cmd, uint8_t d
 	float tracking_omega_min = -0.436332f; //delta 25(degree)
 
 	static float command_old = 0.0f;
-	float command = delta_d + remote_delta_lp; // tracking delta + remote command delta
+	float command = delta_d; // + remote_delta_lp; // tracking delta + remote command delta
 //	*tracking_cmd = (atan(1.053 * tracking_delta / v) / sin(epsilon));	//L : bicycle  length = 1.053(meter)
 
 	if (command > tracking_omega_max) {

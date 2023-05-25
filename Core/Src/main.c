@@ -490,7 +490,7 @@ int main(void)
 
 	float acc_x = acc[0] + GRAVITY*sinf(theta_y);
 	float position_omega = gyro[2]/cosf(theta_x);
-	loop2(&theta_x, &gyro[0], &delta_ref, &V_current, tracking_control, acc_x, position_omega, &lat_current, &lon_current, &horizontal_accuracy, &vertical_accuracy, point_current);
+	loop2(&theta_x, &gyro[0], &delta_ref, &V_current, tracking_control, acc_x, position_omega, &lat_current, &lon_current, &horizontal_accuracy, (int)update_gps, point_current);
 
 //	printf("vel: %d\r\n", (int)(V_current*10));
     /* USER CODE END WHILE */

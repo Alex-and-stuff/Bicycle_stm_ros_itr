@@ -60,7 +60,7 @@ void loop(int* val)
 }
 
 void loop2(float* theta, float* theta_dot, float* delta, float* v, float* cmd, float acc_x,
-		float position_omega, double* lat_current, double* lon_current, float* horizontal_accuracy, float* vertical_accuracy, float* point_current){
+		float position_omega, double* lat_current, double* lon_current, float* horizontal_accuracy, int gps_flag, float* point_current){
 
 //	nh.setSpinTimeout(10);
 	if (nh.connected()){
@@ -76,7 +76,7 @@ void loop2(float* theta, float* theta_dot, float* delta, float* v, float* cmd, f
 		pub_gps.linear.z = *horizontal_accuracy;
 		pub_gps.angular.x = point_current[0];
 		pub_gps.angular.y = point_current[1];
-		pub_gps.angular.z = *vertical_accuracy;
+		pub_gps.angular.z = gps_flag;
 
 		cmd[0] = vel_cmd.linear.x;
 		cmd[1] = vel_cmd.linear.y;
